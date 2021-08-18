@@ -25,8 +25,8 @@ extern "C" {
 
 #include "sample_comm.h"
 
-#define BIG_STREAM_SIZE     PIC_2688x1944
-#define SMALL_STREAM_SIZE   PIC_1080P
+#define BIG_STREAM_SIZE     PIC_1080P
+#define SMALL_STREAM_SIZE   PIC_360P
 
 
 #define VB_MAX_NUM            10
@@ -615,6 +615,8 @@ static HI_S32 SAMPLE_VENC_VPSS_ChnEnable(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, SAM
     memset(&stVpssChnAttr, 0, sizeof(VPSS_CHN_ATTR_S));
     stVpssChnAttr.u32Width                     = pParam->stOutPutSize[VpssChn].u32Width;
     stVpssChnAttr.u32Height                    = pParam->stOutPutSize[VpssChn].u32Height;
+	//stVpssChnAttr.u32Width 					= 1280;
+	//stVpssChnAttr.u32Height 					= 720;
     stVpssChnAttr.enChnMode                    = VPSS_CHN_MODE_USER;
     stVpssChnAttr.enCompressMode               = pParam->enCompressMode[VpssChn];
     stVpssChnAttr.enDynamicRange               = pParam->enDynamicRange;
@@ -929,7 +931,7 @@ void *SAMPLE_VENC_1080P_CLASSIC(void *p)
     HI_S32 s32Ret;
     SIZE_S          stSize[2];
     PIC_SIZE_E      enSize[2]     = {BIG_STREAM_SIZE, SMALL_STREAM_SIZE};
-    HI_S32          s32ChnNum     = 1;
+    HI_S32          s32ChnNum     = 2;
     VENC_CHN        VencChn[2]    = {0,1};
     HI_U32          u32Profile[2] = {0,0};
     PAYLOAD_TYPE_E  enPayLoad[2]  = {PT_H265, PT_H265};
@@ -945,11 +947,11 @@ void *SAMPLE_VENC_1080P_CLASSIC(void *p)
 
     VPSS_GRP        VpssGrp        = 0;
     VPSS_CHN        VpssChn[2]     = {0,1};
-    HI_BOOL         abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {1,0,0};
+    HI_BOOL         abChnEnable[VPSS_MAX_PHY_CHN_NUM] = {1,1,0};
     SAMPLE_VPSS_CHN_ATTR_S stParam;
     SAMPLE_VB_ATTR_S commVbAttr;
 
-    for(i=0; i<2; i++)
+    for(i=0; i<s32ChnNum; i++)
     {
         s32Ret = SAMPLE_COMM_SYS_GetPicSize(enSize[i], &stSize[i]);
         if (HI_SUCCESS != s32Ret)
@@ -1034,35 +1036,35 @@ void *SAMPLE_VENC_1080P_CLASSIC(void *p)
         goto EXIT_VI_VPSS_UNBIND;
     }
 
-   /***encode h.264 **/
-    //s32Ret = SAMPLE_COMM_VENC_Start(VencChn[0], enPayLoad[0],enSize[0], enRcMode,u32Profile[0],bRcnRefShareBuf,&stGopAttr);
-    //if (HI_SUCCESS != s32Ret)
-    //{
-    //    SAMPLE_PRT("Venc Start failed for %#x!\n", s32Ret);
-    //    goto EXIT_VI_VPSS_UNBIND;
-    //}
+   /***encode h.265 **/
+    s32Ret = SAMPLE_COMM_VENC_Start(VencChn[0], enPayLoad[0],enSize[0], enRcMode,u32Profile[0],bRcnRefShareBuf,&stGopAttr);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("Venc Start failed for %#x!\n", s32Ret);
+        goto EXIT_VI_VPSS_UNBIND;
+    }
 
-    //s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(VpssGrp, VpssChn[0],VencChn[0]);
-    //if (HI_SUCCESS != s32Ret)
-    //{
-    //    SAMPLE_PRT("Venc Get GopAttr failed for %#x!\n", s32Ret);
-    //    goto EXIT_VENC_H265_STOP;
-    //}
+    s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(VpssGrp, VpssChn[0],VencChn[0]);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("Venc Get GopAttr failed for %#x!\n", s32Ret);
+        goto EXIT_VENC_H265_STOP;
+    }
 
     /***encode h.264 **/
-     s32Ret = SAMPLE_COMM_VENC_Start(VencChn[0], enPayLoad[0], enSize[0], enRcMode,u32Profile[0],bRcnRefShareBuf,&stGopAttr);
-     if (HI_SUCCESS != s32Ret)
-     {
-         SAMPLE_PRT("Venc Start failed for %#x!\n", s32Ret);
-         goto EXIT_VENC_H265_UnBind;
-     }
+    s32Ret = SAMPLE_COMM_VENC_Start(VencChn[1], enPayLoad[1], enSize[1], enRcMode,u32Profile[1],bRcnRefShareBuf,&stGopAttr);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("Venc Start failed for %#x!\n", s32Ret);
+        goto EXIT_VENC_H265_UnBind;
+    }
 
-     s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(VpssGrp, VpssChn[0],VencChn[0]);
-     if (HI_SUCCESS != s32Ret)
-     {
-         SAMPLE_PRT("Venc bind Vpss failed for %#x!\n", s32Ret);
-         goto EXIT_VENC_H264_STOP;
-     }
+    s32Ret = SAMPLE_COMM_VPSS_Bind_VENC(VpssGrp, VpssChn[1],VencChn[1]);
+    if (HI_SUCCESS != s32Ret)
+    {
+        SAMPLE_PRT("Venc bind Vpss failed for %#x!\n", s32Ret);
+        goto EXIT_VENC_H264_STOP;
+    }
 
     /******************************************
      stream save process

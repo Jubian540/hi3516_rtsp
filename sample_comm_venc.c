@@ -2102,7 +2102,9 @@ HI_VOID* SAMPLE_COMM_VENC_GetVencStreamProc(HI_VOID* p)
 // #else
                     // s32Ret = SAMPLE_COMM_VENC_SaveStream_PhyAddr(pFile[i], &stStreamBufInfo[i], &stStream);
 // #endif
-					HisiPutH265DataToBuffer(&stStream);
+					printf("\nVencCh[%d]\n\n", VencChn);
+					if (VencChn == 1)
+						HisiPutH265DataToBuffer(&stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
                         free(stStream.pstPack);
